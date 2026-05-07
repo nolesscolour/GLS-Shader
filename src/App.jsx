@@ -83,12 +83,13 @@ const FONT_OPTIONS = [
 ];
 
 export default function App() {
+  const isMobile = window.innerWidth <= 768; 
+  
   const [isDockOpen, setIsDockOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('settings');
   const [customText, setCustomText] = useState("");
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0].value);
   
-  // NEW: Modal State
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [copyTextReact, setCopyTextReact] = useState("Copy for React");
   const [copyTextFramer, setCopyTextFramer] = useState("Copy for Framer");
@@ -216,7 +217,6 @@ export default function App() {
     setTimeout(() => setImgText("IMAGE"), 2000);
   };
 
-  // NEW: Split Copy Logic
   const handleCopyReact = () => {
     const codeSnippet = `
 import { ParticleDispersion } from "./ParticleDispersion" 
@@ -315,7 +315,7 @@ addPropertyControls(DispersionEngine, {
       <Canvas 
         className="pf-canvas" 
         camera={{ position: [0, 0, 30] }} 
-        dpr={[1, 1.5]} 
+        dpr={isMobile ? [1, 1] : [1, 1.5]} 
         gl={{ antialias: false, powerPreference: "high-performance", alpha: false, preserveDrawingBuffer: true }}
       >
         <ParticleDispersion 
@@ -330,9 +330,16 @@ addPropertyControls(DispersionEngine, {
           isDualTone={isDualTone}
           autoRotate={autoRotate}
         />
-        <EffectComposer disableNormalPass multisampling={0}>
-          <Bloom luminanceThreshold={0.1} mipmapBlur intensity={bloomIntensity} resolutionScale={0.5} />
-        </EffectComposer>
+        {(!isMobile || bloomIntensity > 0) && (
+          <EffectComposer disableNormalPass multisampling={0}>
+            <Bloom 
+              luminanceThreshold={0.1} 
+              mipmapBlur 
+              intensity={isMobile ? bloomIntensity * 0.5 : bloomIntensity} 
+              resolutionScale={isMobile ? 0.25 : 0.5} 
+            />
+          </EffectComposer>
+        )}
       </Canvas>
 
       <div className="pf-header" style={{ opacity: isDockOpen ? 1 : 0.2, transition: 'opacity 0.4s ease' }}>
@@ -349,7 +356,6 @@ addPropertyControls(DispersionEngine, {
               <button onClick={handleDownloadImage} className="pf-icon-btn pf-action-btn" title="Download High-Res Render">
                 <span>⤓</span> {imgText}
               </button>
-              {/* NOW OPENS MODAL INSTEAD OF COPYING DIRECTLY */}
               <button onClick={() => setShowCodeModal(true)} className="pf-icon-btn pf-action-btn" title="Export Configuration">
                 <span>&lt;/&gt;</span> EXPORT
               </button>
@@ -480,7 +486,6 @@ addPropertyControls(DispersionEngine, {
         </div>
       </div>
 
-      {/* NEW: Modal Overlay UI */}
       {showCodeModal && (
         <div className="pf-modal-overlay" onClick={() => setShowCodeModal(false)}>
           <div className="pf-modal" onClick={(e) => e.stopPropagation()}>
@@ -547,7 +552,7 @@ addPropertyControls(DispersionEngine, {
         .pf-slider input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; cursor: pointer; }
         .pf-slider input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: white; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
         
-        /* NEW MODAL STYLES */
+        /* MODAL STYLES */
         .pf-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; }
         .pf-modal { background: rgba(15,15,20,0.9); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; width: 400px; max-width: 90%; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
         .pf-modal-title { font-family: ui-monospace, monospace; font-size: 14px; font-weight: 600; color: #fff; letter-spacing: 0.1em; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -557,6 +562,19 @@ addPropertyControls(DispersionEngine, {
         .pf-modal-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
         .pf-modal-btn-title { font-family: ui-monospace, monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.05em; color: #fff; transition: color 0.2s; }
         .pf-modal-btn-desc { font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.4; color: rgba(255,255,255,0.5); }
+        
+        /* MOBILE RESPONSIVE TWEAKS */
+        @media (max-width: 768px) {
+          .pf-sliders { grid-template-columns: 1fr 1fr; gap: 16px; }
+          .pf-section > div { flex-direction: column; gap: 16px; }
+          .pf-row { flex-direction: column; }
+          .pf-tabs { flex-wrap: wrap; }
+          .pf-tab { padding: 6px 14px; font-size: 9px; }
+          .pf-modal { width: 95%; padding: 16px; }
+        }
+        @media (max-width: 480px) {
+          .pf-sliders { grid-template-columns: 1fr; }
+        }
       `}</style>
     </div>
   );
